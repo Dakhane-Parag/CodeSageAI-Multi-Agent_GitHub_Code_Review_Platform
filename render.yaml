@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: codesage-api
+    env: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: GITHUB_API_BASE_URL
+        value: https://api.github.com
+      - key: GITHUB_API_VERSION
+        value: 2022-11-28
+      # These must be set manually in the Render Dashboard for security!
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false

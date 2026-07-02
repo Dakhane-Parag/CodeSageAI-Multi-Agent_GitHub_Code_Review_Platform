@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     GITHUB_API_BASE_URL: str = "https://api.github.com"
     GITHUB_API_VERSION: str = "2022-11-28"
     GITHUB_TOKEN: str = ""  # Optional default token for testing
+    GITHUB_WEBHOOK_SECRET: str = "" # Secret used to verify webhook payloads
 
     class Config:
         case_sensitive = True

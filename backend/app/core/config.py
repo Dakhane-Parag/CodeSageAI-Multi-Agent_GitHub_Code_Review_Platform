@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     GITHUB_TOKEN: str = ""  # Optional default token for testing
     GITHUB_WEBHOOK_SECRET: str = "" # Secret used to verify webhook payloads
 
+    # AI / LLM
+    GEMINI_API_KEY: str = ""       # Google Gemini API key
+
     class Config:
         case_sensitive = True
         env_file = ".env"

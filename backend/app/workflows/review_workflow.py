@@ -52,19 +52,19 @@ def route_to_agents(state: WorkflowState) -> WorkflowState:
 
 
 # ---------------------------------------------------------------------------
-# Node: Security Agent (Placeholder)
+# Node: Security Agent (LIVE — Stair 8)
 # ---------------------------------------------------------------------------
 
-def run_security_agent(state: WorkflowState) -> dict:
+async def run_security_agent(state: WorkflowState) -> dict:
     """
-    Security Agent placeholder.
-    Stair 8 will implement actual LLM-based security analysis.
+    Security Agent — analyzes code diffs for security vulnerabilities
+    using Google Gemini with structured JSON output.
     """
+    from app.agents import security_agent
     files = state["pr_files"]
-    logger.info(f"[Security Agent] Running on {len(files)} files... (placeholder)")
-    # TODO (Stair 8): Analyze files for SQL injection, XSS, hardcoded secrets, etc.
-    # Only return the key this node is responsible for
-    return {"security_findings": []}
+    logger.info(f"[Security Agent] Running on {len(files)} files...")
+    findings = await security_agent.analyze(files)
+    return {"security_findings": findings}
 
 
 # ---------------------------------------------------------------------------

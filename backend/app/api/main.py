@@ -1,6 +1,7 @@
 from fastapi import APIRouter
-from app.api.routes import health, webhooks
+from app.api.routes import health, webhooks, reviews
 
 api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
+api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])

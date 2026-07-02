@@ -34,15 +34,42 @@ async def process_pull_request_event(payload: dict[str, Any]):
     Background task to process a pull request event.
     For now, it just logs. In future stairs, it will trigger the AI review pipeline.
     """
+    from app.github.client import GitHubClient
+    from app.github.service import GitHubService
+    from app.services.pr_extraction import extract_pull_request
+
     action = payload.get("action")
     pr_number = payload.get("pull_request", {}).get("number")
-    repo_name = payload.get("repository", {}).get("full_name")
+    # repo_name is 'owner/repo', but we often need them separated
+    repo_full_name = payload.get("repository", {}).get("full_name")
     
-    logger.info(f"Processing pull request event: action={action}, repo={repo_name}, pr={pr_number}")
+    if not repo_full_name or not pr_number:
+        logger.error("Invalid pull request payload structure")
+        return
+        
+    owner, repo = repo_full_name.split("/", 1)
+    
+    logger.info(f"Processing pull request event: action={action}, repo={repo_full_name}, pr={pr_number}")
     
     if action in ["opened", "synchronize", "reopened"]:
-        logger.info(f"Triggering AI review for PR {pr_number} in {repo_name}...")
-        # TODO: Trigger the LangGraph AI workflow here (Stair 7+)
+        logger.info(f"Extracting data for PR {pr_number} in {repo_full_name}...")
+        
+        # Instantiate GitHub client and service
+        token = settings.GITHUB_TOKEN
+        if not token:
+            logger.warning("GITHUB_TOKEN is not set. API calls may fail due to rate limits or private repo access.")
+            
+        try:
+            async with GitHubClient(token) as client:
+                service = GitHubService(client)
+                extracted_pr = await extract_pull_request(service, owner, repo, pr_number)
+                
+                logger.info(f"Extraction successful. Found {len(extracted_pr.files)} files to review.")
+                # TODO: Trigger the LangGraph AI workflow here (Stair 7+) passing `extracted_pr`
+                
+        except Exception as e:
+            logger.error(f"Failed to extract PR data: {e}", exc_info=True)
+            
     else:
         logger.info(f"Ignoring pull request action: {action}")
 

@@ -32,15 +32,15 @@ async def verify_signature(payload: bytes, signature_header: str | None) -> bool
 async def process_pull_request_event(payload: dict[str, Any]):
     """
     Background task to process a pull request event.
-    For now, it just logs. In future stairs, it will trigger the AI review pipeline.
+    Extracts the PR data and invokes the LangGraph review workflow.
     """
     from app.github.client import GitHubClient
     from app.github.service import GitHubService
     from app.services.pr_extraction import extract_pull_request
+    from app.workflows.review_workflow import review_workflow
 
     action = payload.get("action")
     pr_number = payload.get("pull_request", {}).get("number")
-    # repo_name is 'owner/repo', but we often need them separated
     repo_full_name = payload.get("repository", {}).get("full_name")
     
     if not repo_full_name or not pr_number:
@@ -52,26 +52,47 @@ async def process_pull_request_event(payload: dict[str, Any]):
     logger.info(f"Processing pull request event: action={action}, repo={repo_full_name}, pr={pr_number}")
     
     if action in ["opened", "synchronize", "reopened"]:
-        logger.info(f"Extracting data for PR {pr_number} in {repo_full_name}...")
+        logger.info(f"Extracting data for PR #{pr_number} in {repo_full_name}...")
         
-        # Instantiate GitHub client and service
         token = settings.GITHUB_TOKEN
         if not token:
-            logger.warning("GITHUB_TOKEN is not set. API calls may fail due to rate limits or private repo access.")
+            logger.warning("GITHUB_TOKEN is not set. API calls may fail.")
             
         try:
             async with GitHubClient(token) as client:
                 service = GitHubService(client)
+
+                # Step 1: Extract and classify the PR
                 extracted_pr = await extract_pull_request(service, owner, repo, pr_number)
-                
                 logger.info(f"Extraction successful. Found {len(extracted_pr.files)} files to review.")
-                # TODO: Trigger the LangGraph AI workflow here (Stair 7+) passing `extracted_pr`
+
+                # Step 2: Build the initial workflow state from the extracted PR
+                initial_state = {
+                    "owner": owner,
+                    "repo": repo,
+                    "pr_number": pr_number,
+                    "pr_title": extracted_pr.title,
+                    "pr_author": extracted_pr.author,
+                    "pr_files": [f.model_dump() for f in extracted_pr.files],
+                    "security_findings": [],
+                    "performance_findings": [],
+                    "quality_findings": [],
+                    "testing_findings": [],
+                    "aggregated_review": None,
+                    "errors": [],
+                }
+
+                # Step 3: Invoke the LangGraph review workflow
+                logger.info(f"Invoking LangGraph review workflow for PR #{pr_number}...")
+                await review_workflow.ainvoke(initial_state)
+                logger.info(f"Review workflow completed for PR #{pr_number}.")
                 
         except Exception as e:
-            logger.error(f"Failed to extract PR data: {e}", exc_info=True)
+            logger.error(f"Failed to process PR #{pr_number}: {e}", exc_info=True)
             
     else:
         logger.info(f"Ignoring pull request action: {action}")
+
 
 @router.post("/github")
 async def github_webhook(

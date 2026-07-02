@@ -3,3 +3,5 @@ uvicorn[standard]
 pydantic-settings
 motor
 httpx
+langgraph
+langchain-core

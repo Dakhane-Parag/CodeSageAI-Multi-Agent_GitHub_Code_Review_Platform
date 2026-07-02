@@ -84,33 +84,35 @@ async def run_performance_agent(state: WorkflowState) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Node: Code Quality Agent (Placeholder)
+# Node: Code Quality Agent (LIVE — Stair 10)
 # ---------------------------------------------------------------------------
 
-def run_quality_agent(state: WorkflowState) -> dict:
+async def run_quality_agent(state: WorkflowState) -> dict:
     """
-    Code Quality Agent placeholder.
-    Stair 10 will implement actual LLM-based quality analysis.
+    Code Quality Agent — analyzes code diffs for readability, DRY,
+    and clean code principles using Google Gemini.
     """
+    from app.agents import quality_agent
     files = state["pr_files"]
-    logger.info(f"[Quality Agent] Running on {len(files)} files... (placeholder)")
-    # TODO (Stair 10): Analyze for complexity, duplicate logic, naming, etc.
-    return {"quality_findings": []}
+    logger.info(f"[Quality Agent] Running on {len(files)} files...")
+    findings = await quality_agent.analyze(files)
+    return {"quality_findings": findings}
 
 
 # ---------------------------------------------------------------------------
-# Node: Testing Agent (Placeholder)
+# Node: Testing Agent (LIVE — Stair 11)
 # ---------------------------------------------------------------------------
 
-def run_testing_agent(state: WorkflowState) -> dict:
+async def run_testing_agent(state: WorkflowState) -> dict:
     """
-    Testing Agent placeholder.
-    Stair 11 will implement actual LLM-based test coverage analysis.
+    Testing Agent — analyzes code diffs for missing edge cases and
+    poor test coverage using Google Gemini.
     """
+    from app.agents import testing_agent
     files = state["pr_files"]
-    logger.info(f"[Testing Agent] Running on {len(files)} files... (placeholder)")
-    # TODO (Stair 11): Analyze for missing tests, coverage gaps, etc.
-    return {"testing_findings": []}
+    logger.info(f"[Testing Agent] Running on {len(files)} files...")
+    findings = await testing_agent.analyze(files)
+    return {"testing_findings": findings}
 
 
 # ---------------------------------------------------------------------------

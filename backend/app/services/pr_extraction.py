@@ -1,6 +1,8 @@
 import logging
+from collections import Counter
 from app.github.service import GitHubService
 from app.schemas.extraction import ExtractedPR, ExtractedFile
+from app.services.file_classifier import classify_file
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ async def extract_pull_request(
     # 2. Fetch Files (Diffs)
     pr_files = await github_service.get_pull_request_files(owner, repo, pr_number)
     
-    # 3. Normalize and Filter
+    # 3. Normalize, Filter, and Classify
     extracted_files = []
     for file in pr_files:
         # We don't need AI to review deleted files
@@ -38,6 +40,10 @@ async def extract_pull_request(
         if not file.patch:
             logger.debug(f"Ignoring file with no patch (likely binary): {file.filename}")
             continue
+
+        # Classify the file
+        category = classify_file(file.filename)
+        logger.debug(f"Classified '{file.filename}' as [{category.value.upper()}]")
             
         extracted_files.append(
             ExtractedFile(
@@ -45,10 +51,15 @@ async def extract_pull_request(
                 status=file.status,
                 additions=file.additions,
                 deletions=file.deletions,
-                patch=file.patch
+                patch=file.patch,
+                category=category
             )
         )
         
+    # Log a classification summary
+    category_counts = Counter(f.category.value for f in extracted_files)
+    summary = ", ".join(f"{count} {cat.upper()}" for cat, count in category_counts.items())
+    logger.info(f"Classification summary for PR #{pr_number}: {summary}")
     logger.info(f"Extracted {len(extracted_files)} analyzable files from PR #{pr_number}")
     
     # 4. Return Structured Output

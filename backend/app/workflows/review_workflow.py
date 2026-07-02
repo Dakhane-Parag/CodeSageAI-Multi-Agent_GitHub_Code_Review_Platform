@@ -68,18 +68,19 @@ async def run_security_agent(state: WorkflowState) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Node: Performance Agent (Placeholder)
+# Node: Performance Agent (LIVE — Stair 9)
 # ---------------------------------------------------------------------------
 
-def run_performance_agent(state: WorkflowState) -> dict:
+async def run_performance_agent(state: WorkflowState) -> dict:
     """
-    Performance Agent placeholder.
-    Stair 9 will implement actual LLM-based performance analysis.
+    Performance Agent — analyzes code diffs for performance bottlenecks
+    using Google Gemini with structured JSON output.
     """
+    from app.agents import performance_agent
     files = state["pr_files"]
-    logger.info(f"[Performance Agent] Running on {len(files)} files... (placeholder)")
-    # TODO (Stair 9): Analyze for N+1 queries, heavy loops, memory inefficiencies.
-    return {"performance_findings": []}
+    logger.info(f"[Performance Agent] Running on {len(files)} files...")
+    findings = await performance_agent.analyze(files)
+    return {"performance_findings": findings}
 
 
 # ---------------------------------------------------------------------------

@@ -116,24 +116,17 @@ async def run_testing_agent(state: WorkflowState) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Node: Aggregator (Placeholder)
+# Node: Aggregator (LIVE — Stair 12)
 # ---------------------------------------------------------------------------
 
-def aggregate_findings(state: WorkflowState) -> dict:
+async def aggregate_findings(state: WorkflowState) -> dict:
     """
-    Aggregator placeholder.
-    Stair 12 will merge all agent findings into a unified review.
+    Aggregator — runs after all parallel agents complete.
+    Collects all findings, formats them into Markdown, and posts to GitHub.
     """
-    total = (
-        len(state["security_findings"])
-        + len(state["performance_findings"])
-        + len(state["quality_findings"])
-        + len(state["testing_findings"])
-    )
-    pr_number = state["pr_number"]
-    logger.info(f"[Aggregator] Workflow complete for PR #{pr_number}. Total findings: {total}")
-    # TODO (Stair 12): Merge findings, deduplicate, rank by severity.
-    return {"aggregated_review": None}
+    from app.agents import aggregator
+    result = await aggregator.aggregate_and_post(state)
+    return result
 
 
 # ---------------------------------------------------------------------------

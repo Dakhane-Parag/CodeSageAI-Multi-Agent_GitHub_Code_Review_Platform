@@ -40,9 +40,8 @@ def route_to_agents(state: WorkflowState) -> WorkflowState:
     logger.info(f"[Workflow] Starting review for PR #{pr_number} in {repo}")
     logger.info(f"[Workflow] {file_count} files queued for analysis")
 
-    # Ensure all finding lists are initialized
+    # Only initialize the output fields — do NOT spread the full state
     return {
-        **state,
         "security_findings": [],
         "performance_findings": [],
         "quality_findings": [],
@@ -56,7 +55,7 @@ def route_to_agents(state: WorkflowState) -> WorkflowState:
 # Node: Security Agent (Placeholder)
 # ---------------------------------------------------------------------------
 
-def run_security_agent(state: WorkflowState) -> WorkflowState:
+def run_security_agent(state: WorkflowState) -> dict:
     """
     Security Agent placeholder.
     Stair 8 will implement actual LLM-based security analysis.
@@ -64,14 +63,15 @@ def run_security_agent(state: WorkflowState) -> WorkflowState:
     files = state["pr_files"]
     logger.info(f"[Security Agent] Running on {len(files)} files... (placeholder)")
     # TODO (Stair 8): Analyze files for SQL injection, XSS, hardcoded secrets, etc.
-    return {**state, "security_findings": []}
+    # Only return the key this node is responsible for
+    return {"security_findings": []}
 
 
 # ---------------------------------------------------------------------------
 # Node: Performance Agent (Placeholder)
 # ---------------------------------------------------------------------------
 
-def run_performance_agent(state: WorkflowState) -> WorkflowState:
+def run_performance_agent(state: WorkflowState) -> dict:
     """
     Performance Agent placeholder.
     Stair 9 will implement actual LLM-based performance analysis.
@@ -79,14 +79,14 @@ def run_performance_agent(state: WorkflowState) -> WorkflowState:
     files = state["pr_files"]
     logger.info(f"[Performance Agent] Running on {len(files)} files... (placeholder)")
     # TODO (Stair 9): Analyze for N+1 queries, heavy loops, memory inefficiencies.
-    return {**state, "performance_findings": []}
+    return {"performance_findings": []}
 
 
 # ---------------------------------------------------------------------------
 # Node: Code Quality Agent (Placeholder)
 # ---------------------------------------------------------------------------
 
-def run_quality_agent(state: WorkflowState) -> WorkflowState:
+def run_quality_agent(state: WorkflowState) -> dict:
     """
     Code Quality Agent placeholder.
     Stair 10 will implement actual LLM-based quality analysis.
@@ -94,14 +94,14 @@ def run_quality_agent(state: WorkflowState) -> WorkflowState:
     files = state["pr_files"]
     logger.info(f"[Quality Agent] Running on {len(files)} files... (placeholder)")
     # TODO (Stair 10): Analyze for complexity, duplicate logic, naming, etc.
-    return {**state, "quality_findings": []}
+    return {"quality_findings": []}
 
 
 # ---------------------------------------------------------------------------
 # Node: Testing Agent (Placeholder)
 # ---------------------------------------------------------------------------
 
-def run_testing_agent(state: WorkflowState) -> WorkflowState:
+def run_testing_agent(state: WorkflowState) -> dict:
     """
     Testing Agent placeholder.
     Stair 11 will implement actual LLM-based test coverage analysis.
@@ -109,14 +109,14 @@ def run_testing_agent(state: WorkflowState) -> WorkflowState:
     files = state["pr_files"]
     logger.info(f"[Testing Agent] Running on {len(files)} files... (placeholder)")
     # TODO (Stair 11): Analyze for missing tests, coverage gaps, etc.
-    return {**state, "testing_findings": []}
+    return {"testing_findings": []}
 
 
 # ---------------------------------------------------------------------------
 # Node: Aggregator (Placeholder)
 # ---------------------------------------------------------------------------
 
-def aggregate_findings(state: WorkflowState) -> WorkflowState:
+def aggregate_findings(state: WorkflowState) -> dict:
     """
     Aggregator placeholder.
     Stair 12 will merge all agent findings into a unified review.
@@ -130,7 +130,7 @@ def aggregate_findings(state: WorkflowState) -> WorkflowState:
     pr_number = state["pr_number"]
     logger.info(f"[Aggregator] Workflow complete for PR #{pr_number}. Total findings: {total}")
     # TODO (Stair 12): Merge findings, deduplicate, rank by severity.
-    return {**state, "aggregated_review": None}
+    return {"aggregated_review": None}
 
 
 # ---------------------------------------------------------------------------

@@ -84,8 +84,40 @@ async def process_pull_request_event(payload: dict[str, Any]):
 
                 # Step 3: Invoke the LangGraph review workflow
                 logger.info(f"Invoking LangGraph review workflow for PR #{pr_number}...")
-                await review_workflow.ainvoke(initial_state)
+                final_state = await review_workflow.ainvoke(initial_state)
                 logger.info(f"Review workflow completed for PR #{pr_number}.")
+                
+                # Step 4: Persist the AI review to MongoDB
+                try:
+                    from app.db.session import get_database
+                    from app.db.repositories.ai_reviews import AiReviewRepository
+                    from app.models.ai_review import AiReviewInDB
+
+                    db = get_database()
+                    repo_db = AiReviewRepository(db)
+                    
+                    # Combine findings for the model
+                    all_findings = (
+                        final_state.get("security_findings", []) +
+                        final_state.get("performance_findings", []) +
+                        final_state.get("quality_findings", []) +
+                        final_state.get("testing_findings", [])
+                    )
+
+                    review_doc = AiReviewInDB(
+                        owner=owner,
+                        repo=repo,
+                        pr_number=pr_number,
+                        pr_title=final_state.get("pr_title", ""),
+                        total_findings=len(all_findings),
+                        findings=all_findings,
+                        markdown_report=final_state.get("aggregated_review", "")
+                    )
+                    
+                    await repo_db.create(review_doc)
+                    logger.info(f"Successfully saved AI review for PR #{pr_number} to MongoDB.")
+                except Exception as db_err:
+                    logger.error(f"Failed to save AI review to MongoDB: {db_err}", exc_info=True)
                 
         except Exception as e:
             logger.error(f"Failed to process PR #{pr_number}: {e}", exc_info=True)

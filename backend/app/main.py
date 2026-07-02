@@ -1,6 +1,10 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Configure basic logging to ensure our logs show up in Render
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(message)s")
 
 from app.core.config import settings
 from app.api.main import api_router
